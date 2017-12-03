@@ -1,0 +1,4 @@
+# 
+cryptography # for AES and HMAC functionality
+PyYAML # for configuration
+
