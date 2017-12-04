@@ -61,6 +61,7 @@ class HandlerThread(threading.Thread):
             try:
                 # TODO/XXX: should include IV in HMAC signature... (remove from above when done)
                 h.update(payload_encrypted)
+                h.update(iv)
                 h.verify(signature)
             except cryptography.exceptions.InvalidSignature:
                 print "invalid signature for received message"

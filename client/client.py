@@ -68,6 +68,7 @@ def main():
         print "creating signature"
         h = hmac.HMAC(hmac_key, hashes.SHA256(), backend=default_backend())
         h.update(data_encrypted)
+        h.update(iv)
         signature = h.finalize()
 
         print "sending data: {}".format(base64.b64encode(data_encrypted), base64.b64encode(iv), base64.b64encode(signature))
