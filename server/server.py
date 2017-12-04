@@ -41,8 +41,7 @@ class HandlerThread(threading.Thread):
         print "got message: {}".format(joined)
         parts = joined.split(".")
         # format: <base64 encoded encrypted payload>.<base64 encoded encryption IV>.<base64 encoded HMAC signature>
-        # (inspired by JSON Web Tokens)
-        # TODO/XXX: should include IV in HMAC signature...
+        # signature includes encrypted payload and IV (see below/client.py), general format inspired by JSON Web Tokens
 
         if len(parts) != 3:
             print "invalid received message; should be dot-separated and have three parts"
@@ -59,7 +58,6 @@ class HandlerThread(threading.Thread):
 
             h = hmac.HMAC(hmac_key, hashes.SHA256(), backend=default_backend())
             try:
-                # TODO/XXX: should include IV in HMAC signature... (remove from above when done)
                 h.update(payload_encrypted)
                 h.update(iv)
                 h.verify(signature)
@@ -67,7 +65,6 @@ class HandlerThread(threading.Thread):
                 print "invalid signature for received message"
                 return
 
-            # TODO/XXX: should include IV in HMAC signature... (remove from above when done)
             cipher = Cipher(algorithms.AES(aes_key), modes.CBC(iv), backend=default_backend())
             decryptor = cipher.decryptor()
             payload_decrypted_padded = decryptor.update(payload_encrypted) + decryptor.finalize()

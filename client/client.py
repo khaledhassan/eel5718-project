@@ -74,11 +74,13 @@ def main():
         print "sending data: {}".format(base64.b64encode(data_encrypted), base64.b64encode(iv), base64.b64encode(signature))
         s.send("{}.{}.{}".format(base64.b64encode(data_encrypted), base64.b64encode(iv), base64.b64encode(signature)))
 
-        s.shutdown(socket.SHUT_WR) # according to <https://docs.python.org/2.7/howto/sockets.html> you should shutdown before closing
+        # according to <https://docs.python.org/2.7/howto/sockets.html> you should shutdown before closing
+        s.shutdown(socket.SHUT_WR)
         s.close() # we close the connection in order to signal to the other side that we're finished
         print "connection closed"
     except socket.error as e:
         print "socket error: {}".format(e)
+
 
 if __name__ == "__main__":
     main()
