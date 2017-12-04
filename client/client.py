@@ -42,7 +42,7 @@ def main():
         data_pickled = pickle.dumps(data)
         print "sending data"
         s.send(data_pickled)
-        s.shutdown() # according to <https://docs.python.org/2.7/howto/sockets.html> you should shutdown before closing
+        s.shutdown(socket.SHUT_WR) # according to <https://docs.python.org/2.7/howto/sockets.html> you should shutdown before closing
         s.close() # we close the connection in order to signal to the other side that we're finished
         print "connection closed"
     except socket.error as e:
