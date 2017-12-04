@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 
+import base64
 import pickle
 from optparse import OptionParser
 import socket # I wish we could use https://docs.python.org/2.7/library/socketserver.html -- can we?
 import sys
 import threading
+
+import cryptography
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, hmac, padding
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 # see http://docopt.org/ for some info on command line argument formats
 parser = OptionParser(usage="usage: %prog [options]")
@@ -12,6 +18,9 @@ parser.add_option("-s", "--server", action="store", type="string", dest="server_
                   default="localhost", help="server hostname/IP (defaults to localhost)")
 parser.add_option("-p", "--port", action="store", type="int", dest="server_port",
                   default=8888, help="server port (defaults to 8888)")
+
+aes_key = b'01234567890123456789012345678901'
+hmac_key = b'12345678901234567890123456789012'
 
 
 class HandlerThread(threading.Thread):
@@ -25,12 +34,48 @@ class HandlerThread(threading.Thread):
         while True:
             chunk = self.clientsocket.recv(2048)
             chunks.append(chunk)
-            if len(chunk) == 0:
-                break
+            if len(chunk) == 0:     # recv returns nothing when the client connection is closed
+                break               # (client closes when finished sending)
 
-        pickled = ''.join(chunks)
-        data = pickle.loads(pickled)
-        print data
+        joined = ''.join(chunks)
+        print "got message: {}".format(joined)
+        parts = joined.split(".")
+        # format: <base64 encoded encrypted payload>.<base64 encoded encryption IV>.<base64 encoded HMAC signature>
+        # (inspired by JSON Web Tokens)
+        # TODO/XXX: should include IV in HMAC signature...
+
+        if len(parts) != 3:
+            print "invalid received message; should be dot-separated and have three parts"
+            print "received message: %{}s".format(joined)
+            return
+        else:
+            try:
+                payload_encrypted = base64.b64decode(parts[0])
+                iv = base64.b64decode(parts[1])
+                signature = base64.b64decode(parts[2])
+            except TypeError:
+                print "error decoding base64 data"
+                return
+
+            h = hmac.HMAC(hmac_key, hashes.SHA256(), backend=default_backend())
+            try:
+                # TODO/XXX: should include IV in HMAC signature... (remove from above when done)
+                h.update(payload_encrypted)
+                h.verify(signature)
+            except cryptography.exceptions.InvalidSignature:
+                print "invalid signature for received message"
+                return
+
+            # TODO/XXX: should include IV in HMAC signature... (remove from above when done)
+            cipher = Cipher(algorithms.AES(aes_key), modes.CBC(iv), backend=default_backend())
+            decryptor = cipher.decryptor()
+            payload_decrypted_padded = decryptor.update(payload_encrypted) + decryptor.finalize()
+            unpadder = padding.PKCS7(128).unpadder()
+            payload_pickled = unpadder.update(payload_decrypted_padded) + unpadder.finalize()
+            payload = pickle.loads(payload_pickled)
+
+            print payload
+
 
 def main():
     (options, args) = parser.parse_args()
@@ -47,7 +92,6 @@ def main():
             print "got connection from {}".format(address)
             t = HandlerThread(clientsocket)
             t.start()
-
 
     except socket.error as e:
         print "socket error: {}".format(e)

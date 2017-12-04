@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 
+import base64
 import pickle
 from optparse import OptionParser
+import os
 import socket
 import sys
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, hmac, padding
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 # see http://docopt.org/ for some info on command line argument formats
 parser = OptionParser(usage="usage: %prog [options] (-m | -f FILE)")
@@ -17,6 +23,9 @@ parser.add_option("-m", "--message", action="store_false", dest="file_mode",
                   default=True, help="will read a message from stdin (until EOF)")
 parser.add_option("-f", "--file", action="store", type="string", dest="file_to_encrypt",
                   metavar="FILE", help="name of file to encrypt")
+
+aes_key = b'01234567890123456789012345678901'
+hmac_key = b'12345678901234567890123456789012'
 
 
 def main():
@@ -43,8 +52,27 @@ def main():
             data["filename"] = options.file_to_encrypt
 
         data_pickled = pickle.dumps(data)
-        print "sending data"
-        s.send(data_pickled)
+
+        # encrypt data
+        print "initializing crypto"
+        iv = os.urandom(16)
+        cipher = Cipher(algorithms.AES(aes_key), modes.CBC(iv), backend=default_backend())
+        encryptor = cipher.encryptor()
+        padder = padding.PKCS7(128).padder()
+        print "padding data"
+        data_pickled_padded = padder.update(data_pickled) + padder.finalize()
+        print "encrypting data"
+        data_encrypted = encryptor.update(data_pickled_padded) + encryptor.finalize()
+
+        # create signature
+        print "creating signature"
+        h = hmac.HMAC(hmac_key, hashes.SHA256(), backend=default_backend())
+        h.update(data_encrypted)
+        signature = h.finalize()
+
+        print "sending data: {}".format(base64.b64encode(data_encrypted), base64.b64encode(iv), base64.b64encode(signature))
+        s.send("{}.{}.{}".format(base64.b64encode(data_encrypted), base64.b64encode(iv), base64.b64encode(signature)))
+
         s.shutdown(socket.SHUT_WR) # according to <https://docs.python.org/2.7/howto/sockets.html> you should shutdown before closing
         s.close() # we close the connection in order to signal to the other side that we're finished
         print "connection closed"
