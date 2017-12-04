@@ -79,7 +79,26 @@ class HandlerThread(threading.Thread):
                 print "error unpickling decrypted data"
                 return
 
-            print payload
+            print "payload recieved: {}".format(payload)
+
+            if "type" in payload and "content" in payload:
+                if payload["type"] == "file":
+                    if "filename" in payload:
+                        # replace slashes with underscores as client may send full path
+                        filename_no_slashes = payload["filename"].replace("/", "_")
+                        with open(filename_no_slashes, "w") as f:
+                            f.write(payload["content"])
+                            f.close()
+                    else:
+                        print "payload is file type but missing filename"
+                        return
+                elif payload["type"] == "message":
+                    print "message recieved: {}".format(payload["content"])
+                else:
+                    print "payload type neither message nor file?!"
+                    return
+            else:
+                print "payload missing some fields, must have content and type at minimum"
 
 
 def main():
