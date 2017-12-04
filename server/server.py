@@ -72,7 +72,11 @@ class HandlerThread(threading.Thread):
             payload_decrypted_padded = decryptor.update(payload_encrypted) + decryptor.finalize()
             unpadder = padding.PKCS7(128).unpadder()
             payload_pickled = unpadder.update(payload_decrypted_padded) + unpadder.finalize()
-            payload = pickle.loads(payload_pickled)
+            try:
+                payload = pickle.loads(payload_pickled)
+            except:
+                print "error unpickling decrypted data"
+                return
 
             print payload
 
