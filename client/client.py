@@ -39,6 +39,9 @@ def main():
 
         data_type = "file" if options.file_mode else "message"
         data = {"type": data_type, "content": message}
+        if options.file_mode:
+            data["filename"] = options.file_to_encrypt
+
         data_pickled = pickle.dumps(data)
         print "sending data"
         s.send(data_pickled)
