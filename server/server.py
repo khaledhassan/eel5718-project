@@ -100,7 +100,6 @@ class HandlerThread(threading.Thread):
 
 def main():
     (options, args) = parser.parse_args()
-    print options
 
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

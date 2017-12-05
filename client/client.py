@@ -30,7 +30,6 @@ hmac_key = b'12345678901234567890123456789012'
 
 def main():
     (options, args) = parser.parse_args()
-    print options
 
     if options.file_to_encrypt is None and options.file_mode is True:
         parser.error("did not specify filename or -m/--message flag")
