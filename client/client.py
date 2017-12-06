@@ -38,7 +38,7 @@ def main():
         with open(options.file_to_encrypt) as f:
             message = f.read()
     else:
-        sys.exit("TODO: message mode to be implemented")
+        message = sys.stdin.read()
 
     try:
         print "opening connection to {} port {}".format(options.server_host, options.server_port)
