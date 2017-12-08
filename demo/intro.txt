@@ -1,0 +1,27 @@
+Welcome to our EEL5718 Project Demo
+
+Team:
+Khaled Hassan
+Samuel Lichtenheld
+
+Project:
+End to End Message Transmission with Encryption and Authentication using Socket Programming
+
+Features:
+Client transmits files (text or binary) or anything sent to the client's stdin (until EOF) to the server.
+The server saves the files and prints the messages recieved to the server's stdout.
+
+The message is encrypted using AES256-CBC, and then HMAC-SHA256 is applied to both the
+encrypted payload and the encryption IV.
+
+The encrypted payload, the IV, and the HMAC signature are all converted to base64 strings
+and concatenated together, separated by "." (inspired by JSON Web Tokens https://jwt.io).
+
+The server verifies the signature on the transmitted information before attempting to decrypt the payload.
+If an attacker modifies the encrypted payload or the IV, the signature will not match. If the signature
+is modified, it also will not match. This provides integrity over the entire message.
+
+It is especially important to authenticate the payload because the encrypted message is actually a
+serialized data structure (using the built-in Python pickle library). This library says that it
+is important not to deserialize an object from an untrusted source. Because the message is successfully
+authenticated, we consider it trusted (and not maliciously constructed).
