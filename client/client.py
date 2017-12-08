@@ -71,7 +71,7 @@ def main():
         signature = h.finalize()
 
         print "sending data"
-        s.send("{}.{}.{}".format(base64.b64encode(data_encrypted), base64.b64encode(iv), base64.b64encode(signature)))
+        s.sendall("{}.{}.{}".format(base64.b64encode(data_encrypted), base64.b64encode(iv), base64.b64encode(signature)))
 
         # according to <https://docs.python.org/2.7/howto/sockets.html> you should shutdown before closing
         s.shutdown(socket.SHUT_WR)
