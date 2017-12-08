@@ -38,14 +38,12 @@ class HandlerThread(threading.Thread):
                 break               # (client closes when finished sending)
 
         joined = ''.join(chunks)
-        print "got message: {}".format(joined)
         parts = joined.split(".")
         # format: <base64 encoded encrypted payload>.<base64 encoded encryption IV>.<base64 encoded HMAC signature>
         # signature includes encrypted payload and IV (see below/client.py), general format inspired by JSON Web Tokens
 
         if len(parts) != 3:
             print "invalid received message; should be dot-separated and have three parts"
-            print "received message: %{}s".format(joined)
             return
         else:
             try:
@@ -75,8 +73,6 @@ class HandlerThread(threading.Thread):
             except:
                 print "error unpickling decrypted data"
                 return
-
-            print "payload recieved: {}".format(payload)
 
             if "type" in payload and "content" in payload:
                 if payload["type"] == "file":

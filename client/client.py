@@ -70,7 +70,7 @@ def main():
         h.update(iv)
         signature = h.finalize()
 
-        print "sending data: {}".format(base64.b64encode(data_encrypted), base64.b64encode(iv), base64.b64encode(signature))
+        print "sending data"
         s.send("{}.{}.{}".format(base64.b64encode(data_encrypted), base64.b64encode(iv), base64.b64encode(signature)))
 
         # according to <https://docs.python.org/2.7/howto/sockets.html> you should shutdown before closing
